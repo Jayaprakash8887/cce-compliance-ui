@@ -1,0 +1,30 @@
+# CCE Compliance UI — Host Caddy Site Block
+#
+# Add this to the EC2 host's Caddyfile (e.g., /etc/caddy/Caddyfile)
+# to route traffic to the compliance-ui container and the Compliance Service.
+#
+# Replace:
+#   <your-domain>           → your domain or :80 for plain HTTP
+#   localhost:3000           → compliance-ui container address
+#   localhost:8080           → Compliance Service address
+#
+# After editing, reload Caddy:
+#   sudo systemctl reload caddy
+
+<your-domain> {
+
+	# API calls → Compliance Service
+	handle /v1/* {
+		reverse_proxy localhost:8080 {
+			header_up Host {upstream_hostport}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Everything else → Compliance UI container
+	handle {
+		reverse_proxy localhost:3000
+	}
+}
