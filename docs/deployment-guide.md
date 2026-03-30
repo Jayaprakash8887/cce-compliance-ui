@@ -20,7 +20,7 @@
 
 ## 1. Overview
 
-The Compliance UI is deployed as a Docker container that serves the static React SPA. The **host Caddy** (already running on EC2) acts as the front-facing reverse proxy, routing browser traffic to the UI container and API calls to the Compliance Service.
+The Compliance UI is deployed as a Docker container that serves the static React SPA. The **host Caddy** (already running on EC2) acts as the front-facing reverse proxy, routing browser traffic to the UI container and API calls to the CCE Gateway.
 
 ```
                      Browser
@@ -32,22 +32,22 @@ The Compliance UI is deployed as a Docker container that serves the static React
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │  Host Caddy (already deployed)                      │  │
 │  │  ├── /*      →  compliance-ui container :3000       │  │
-│  │  └── /v1/*   →  Compliance Service :8080            │  │
+│  │  └── /v1/*   →  CCE Gateway :8060                    │  │
 │  └─────────────────────────────────────────────────────┘  │
 │           │                          │                    │
 │           ▼                          ▼                    │
 │  ┌──────────────────┐   ┌─────────────────────────┐      │
-│  │ Docker container  │   │  Compliance Service     │      │
-│  │ cce-compliance-ui │   │  (port 8080)            │      │
-│  │ Caddy :3000       │   │                         │      │
-│  │ └── static SPA    │   │                         │      │
+│  │ Docker container  │   │  CCE Gateway          │      │
+│  │ cce-compliance-ui │   │  (port 8060)           │      │
+│  │ Caddy :3000       │   │  └─→ Compliance Service │      │
+│  │ └── static SPA    │   │      (port 8080)       │      │
 │  └──────────────────┘   └─────────────────────────┘      │
 └───────────────────────────────────────────────────────────┘
 ```
 
 **Key points:**
 - The container only serves static files — no API proxying happens inside it
-- The host Caddy handles routing: `/v1/*` → Compliance Service, everything else → UI container
+- The host Caddy handles routing: `/v1/*` → CCE Gateway, everything else → UI container
 - The container runs its own lightweight Caddy for SPA routing (`try_files`) and asset caching
 
 ---
@@ -58,13 +58,15 @@ The Compliance UI is deployed as a Docker container that serves the static React
 |---|---|
 | **EC2 Instance** | With Caddy already installed and running |
 | **Docker** | 24+ installed and running |
-| **Compliance Service** | Running and accessible (port 8080) |
+| **CCE Gateway** | Running and accessible (port 8060) |
+| **Compliance Service** | Running behind the Gateway (port 8080) |
 
 Verify prerequisites:
 
 ```bash
 caddy version            # Host Caddy installed
 docker --version         # Docker available
+curl -s http://localhost:8060/actuator/health   # CCE Gateway up
 curl -s http://localhost:8080/actuator/health   # Compliance Service up
 ```
 
@@ -128,15 +130,15 @@ docker build --build-arg VITE_API_BASE_URL= -t cce-compliance-ui:latest .
 
 ## 4. Configure Host Caddy
 
-Add a site block to the host Caddy configuration so it routes traffic to the UI container and the Compliance Service. A reference snippet is provided at `deploy/caddy-site.example`.
+Add a site block to the host Caddy configuration so it routes traffic to the UI container and the CCE Gateway. A reference snippet is provided at `deploy/caddy-site.example`.
 
 ### Example: Plain HTTP (Demo)
 
 ```caddyfile
 :80 {
-    # API calls → Compliance Service
+    # API calls → CCE Gateway
     handle /v1/* {
-        reverse_proxy localhost:8080 {
+        reverse_proxy localhost:8060 {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
@@ -155,9 +157,9 @@ Add a site block to the host Caddy configuration so it routes traffic to the UI 
 
 ```caddyfile
 cce-demo.example.com {
-    # API calls → Compliance Service
+    # API calls → CCE Gateway
     handle /v1/* {
-        reverse_proxy localhost:8080 {
+        reverse_proxy localhost:8060 {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
@@ -309,7 +311,7 @@ No Caddy reload is needed when updating the container — the host Caddy config 
 |---|---|---|
 | **Blank page at localhost:3000** | SPA not built or container Caddy misconfigured | Check `docker logs cce-compliance-ui`, verify `/srv/index.html` exists in container |
 | **Browser shows Caddy default page at :80** | Host Caddyfile missing site block for the UI | Add the site block from [Section 4](#4-configure-host-caddy) and reload Caddy |
-| **API calls return 502 via host Caddy** | Compliance Service not running or wrong port in Caddyfile | Verify: `curl http://localhost:8080/actuator/health` |
+| **API calls return 502 via host Caddy** | CCE Gateway not running or wrong port in Caddyfile | Verify: `curl http://localhost:8060/actuator/health` |
 | **CORS errors in browser** | `VITE_API_BASE_URL` set to a different origin at build time | Rebuild with `VITE_API_BASE_URL=` (empty) so requests use relative paths through host Caddy |
 | **Container exits immediately** | Port 3000 already in use | `lsof -i :3000` to find the conflict |
 | **Stale UI after deploy** | Browser cached old JS bundles | Hard refresh (Ctrl+Shift+R); hashed filenames ensure new deploys get new bundles |

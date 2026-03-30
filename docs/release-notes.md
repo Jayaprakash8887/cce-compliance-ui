@@ -69,14 +69,14 @@
 - **API layer**: Typed fetch wrappers with `ApiError` class, all endpoints through `src/api/`
 - **State management**: TanStack Query for server state, React Router for URL state, `useState` for UI state — no Redux/Zustand
 - **Deployment**: Multi-stage Docker build (Node 22 → Caddy 2), ~50 MB image, deployed on EC2
-- **Web server**: Container runs Caddy for SPA static serving; host Caddy (already on EC2) handles API reverse-proxying to Compliance Service
+- **Web server**: Container runs Caddy for SPA static serving; host Caddy (already on EC2) handles API reverse-proxying to CCE Gateway
 - **Tests**: 34 passing — API client error handling, utility functions (compliance rate, dates, colors)
 
 ### Configuration
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8080` | Direct API URL (build-time; empty for Docker) |
+| `VITE_API_BASE_URL` | `http://localhost:8060` | CCE Gateway URL (build-time; empty for Docker) |
 | `VITE_AUTH_ENABLED` | `false` | OAuth toggle |
 | `VITE_AUTH_TOKEN` | _(empty)_ | Pre-seeded Bearer token (overrides sessionStorage) |
 | `VITE_POLLING_INTERVAL` | `30000` | Auto-refresh interval (ms) |
@@ -84,7 +84,7 @@
 ### Known Limitations
 
 - **Read-only** — no data mutation; events are submitted via Postman or emitter adaptors
-- **No authentication UI** — demo mode bypasses OAuth (`VITE_AUTH_ENABLED=false`)
+- **No authentication UI** — demo mode uses the Gateway with OAuth disabled (`VITE_AUTH_ENABLED=false`)
 - **No WebSocket** — polling-based refresh via TanStack Query
 - **Dashboard aggregates** are limited to protocol definition counts (no cross-patient metrics endpoint yet)
 - **English only** — no i18n support
@@ -92,5 +92,5 @@
 ### Deployment
 
 - Docker container on EC2 with host Caddy as reverse proxy
-- Container serves static SPA only; host Caddy routes `/v1/*` to Compliance Service
+- Container serves static SPA only; host Caddy routes `/v1/*` to CCE Gateway
 - See [docs/deployment-guide.md](docs/deployment-guide.md) and `deploy/caddy-site.example` for full instructions

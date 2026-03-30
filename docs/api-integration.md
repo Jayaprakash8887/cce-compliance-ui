@@ -1,7 +1,7 @@
 # API Integration Reference
 
 > **CCE Compliance UI** — Complete mapping of UI features to Compliance Service APIs  
-> All endpoints are consumed from the Compliance Service (`port 8080`) or via the CCE Gateway (`port 8060`).
+> All endpoints are consumed via the CCE Gateway (`port 8060`), which routes to the Compliance Service.
 
 ---
 
@@ -462,19 +462,11 @@ if (error) return <ErrorBanner message={error.message} onRetry={() => queryClien
 
 ## 6. CORS Configuration
 
-For demo mode (UI on port 3000 → Compliance Service on port 8080), the Compliance Service must allow CORS from `localhost:3000`.
+For local development (UI on port 3000 → CCE Gateway on port 8060), the Gateway must allow CORS from `localhost:3000`.
 
-### Option A: Compliance Service CORS Config (Recommended for Demo)
+### Option A: Gateway CORS Config (Recommended for Demo)
 
-Add to Compliance Service `application.yml`:
-
-```yaml
-cce:
-  cors:
-    allowed-origins: "http://localhost:3000"
-    allowed-methods: "GET"
-    allowed-headers: "*"
-```
+Configure CORS at the CCE Gateway level so all downstream services are covered.
 
 ### Option B: Vite Dev Server Proxy (No CORS needed)
 
@@ -487,7 +479,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/v1': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8060',
         changeOrigin: true,
       },
     },
@@ -495,8 +487,8 @@ export default defineConfig({
 });
 ```
 
-With the proxy, set `VITE_API_BASE_URL=` (empty) so the UI calls relative paths like `/v1/protocol-definitions`, which Vite proxies to the Compliance Service.
+With the proxy, set `VITE_API_BASE_URL=` (empty) so the UI calls relative paths like `/v1/protocol-definitions`, which Vite proxies to the Gateway.
 
 ### Option C: Production (Host Caddy Reverse Proxy)
 
-In Docker deployment on EC2, the host Caddy (already deployed) reverse-proxies `/v1/*` to the Compliance Service and everything else to the UI container. No CORS needed. See `deploy/caddy-site.example` for the host Caddy configuration.
+In Docker deployment on EC2, the host Caddy (already deployed) reverse-proxies `/v1/*` to the CCE Gateway and everything else to the UI container. No CORS needed. See `deploy/caddy-site.example` for the host Caddy configuration.

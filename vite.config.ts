@@ -9,7 +9,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/v1': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8060',
         changeOrigin: true,
       },
     },

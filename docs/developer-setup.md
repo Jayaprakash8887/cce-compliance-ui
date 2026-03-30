@@ -21,13 +21,13 @@ The Compliance UI is a **read-only** consumer of the Compliance Service REST API
 |---------|------|---------|
 | **Collector Service** (Docker Compose) | 5433 (PostgreSQL), 9092 (Kafka) | Infrastructure + database |
 | **Compliance Service** | 8080 | REST APIs consumed by UI |
+| **CCE Gateway** | 8060 | API routing (UI connects here) |
 
 Optionally, for the full event pipeline:
 
 | Service | Port | Purpose |
 |---------|------|---------|
 | **OpenHIM Emitter Adaptor** | — | Submit clinical events |
-| **CCE Gateway** | 8060 | OAuth routing (not needed in demo mode) |
 
 ---
 
@@ -52,7 +52,15 @@ cd /path/to/cce-compliance-service
 # Verify: curl http://localhost:8080/actuator/health
 ```
 
-### 2.3 Load Protocol Definitions (Demo Data)
+### 2.3 Start CCE Gateway
+
+```bash
+cd /path/to/cce-gateway
+./gradlew bootRun
+# Verify: curl http://localhost:8060/actuator/health
+```
+
+### 2.4 Load Protocol Definitions (Demo Data)
 
 ```bash
 # Load sample protocols from the artifacts folder
@@ -60,7 +68,7 @@ cd /path/to/cce-compliance-sub_system/artifacts
 bash load-protocol-definitions.sh
 ```
 
-### 2.4 Start the UI
+### 2.5 Start the UI
 
 ```bash
 cd cce-compliance-ui
@@ -74,7 +82,7 @@ npm run dev
 
 Open http://localhost:3000 in your browser.
 
-### 2.5 Submit Demo Events
+### 2.6 Submit Demo Events
 
 Use Postman or the emitter adaptor to submit clinical events. Sample events are in:
 - `artifacts/sample-kafka-events-ebuzima-visit.json`
@@ -90,7 +98,7 @@ Create a `.env` file in the project root (or set in your terminal):
 
 ```bash
 # .env
-VITE_API_BASE_URL=http://localhost:8080   # Compliance Service URL (or Gateway URL)
+VITE_API_BASE_URL=http://localhost:8060   # CCE Gateway URL
 VITE_AUTH_ENABLED=false                    # Demo mode: no OAuth
 VITE_AUTH_TOKEN=                           # Pre-seeded Bearer token (optional, overrides sessionStorage)
 VITE_POLLING_INTERVAL=30000               # Auto-refresh interval (ms), 0 to disable
@@ -98,7 +106,7 @@ VITE_POLLING_INTERVAL=30000               # Auto-refresh interval (ms), 0 to dis
 
 | Variable | Default | Options | Description |
 |---|---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8080` | Any URL | Target API server. Empty string if using Vite proxy. |
+| `VITE_API_BASE_URL` | `http://localhost:8060` | Any URL | CCE Gateway URL. Empty string if using Vite proxy. |
 | `VITE_AUTH_ENABLED` | `false` | `true` / `false` | Enable OAuth token in API requests |
 | `VITE_AUTH_TOKEN` | _(empty)_ | JWT string | Pre-seeded Bearer token; falls back to `sessionStorage.access_token` if empty |
 | `VITE_POLLING_INTERVAL` | `30000` | Any number (ms) | TanStack Query refetch interval. `0` disables polling. |
@@ -136,7 +144,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       // Uncomment to use proxy instead of VITE_API_BASE_URL
-      // '/v1': { target: 'http://localhost:8080', changeOrigin: true },
+      // '/v1': { target: 'http://localhost:8060', changeOrigin: true },
     },
   },
 });
@@ -315,7 +323,7 @@ import '@testing-library/jest-dom/vitest';
 // src/test/mocks/handlers.ts
 import { http, HttpResponse } from 'msw';
 
-const API = 'http://localhost:8080/v1';
+const API = 'http://localhost:8060/v1';
 
 export const handlers = [
   http.get(`${API}/protocol-definitions`, () => {

@@ -58,19 +58,15 @@ graph LR
     style CS fill:#10b981,color:#fff
 ```
 
-### Demo Mode Flow (No Gateway)
+### API Flow
 
-For demos, the UI connects directly to the Compliance Service, bypassing the gateway and OAuth:
-
-```
-Browser (port 3000) ──REST──▶ Compliance Service (port 8080) ──▶ PostgreSQL
-```
-
-### Production Flow (With Gateway)
+Both demo and production modes route API calls through the CCE Gateway:
 
 ```
 Browser (port 3000) ──REST──▶ CCE Gateway (port 8060) ──▶ Compliance Service (port 8080) ──▶ PostgreSQL
 ```
+
+In demo mode, OAuth is disabled at the gateway level (`VITE_AUTH_ENABLED=false`), but the request path is the same.
 
 ---
 
@@ -392,7 +388,7 @@ npm run dev    # Vite dev server on port 3000 with HMR
 
 ### Production (Docker + Host Caddy)
 
-The UI runs as a Docker container serving static files. The EC2 host's Caddy (already deployed) reverse-proxies browser traffic to the container and `/v1/*` API calls to the Compliance Service.
+The UI runs as a Docker container serving static files. The EC2 host's Caddy (already deployed) reverse-proxies browser traffic to the container and `/v1/*` API calls to the CCE Gateway.
 
 ```dockerfile
 # Stage 1: Build
@@ -426,6 +422,6 @@ header @static Cache-Control "public, max-age=31536000, immutable"
 
 ### Host Caddy Configuration
 
-The host Caddy routes `/v1/*` to the Compliance Service and everything else to the UI container.
+The host Caddy routes `/v1/*` to the CCE Gateway and everything else to the UI container.
 
 See `deploy/caddy-site.example` for a ready-to-use snippet.

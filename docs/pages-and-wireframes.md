@@ -1,7 +1,7 @@
 # UI Pages & Wireframes
 
 > **CCE Compliance UI** — Page-by-page design reference with ASCII wireframes  
-> Each page maps directly to Compliance Service API endpoints.
+> Each page maps to Compliance Service API endpoints consumed via the CCE Gateway.
 
 ---
 

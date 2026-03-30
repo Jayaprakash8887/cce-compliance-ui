@@ -22,7 +22,7 @@ docker build -t cce-compliance-ui .
 docker run -d -p 127.0.0.1:3000:3000 cce-compliance-ui
 ```
 
-The container serves the static SPA using **Caddy**. On EC2, the host Caddy (already deployed) reverse-proxies browser traffic to the container and `/v1/*` API calls to the Compliance Service — see `deploy/caddy-site.example`.
+The container serves the static SPA using **Caddy**. On EC2, the host Caddy (already deployed) reverse-proxies browser traffic to the container and `/v1/*` API calls to the CCE Gateway — see `deploy/caddy-site.example`.
 
 ## Environment Variables
 
@@ -30,7 +30,7 @@ The container serves the static SPA using **Caddy**. On EC2, the host Caddy (alr
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8080` | Compliance Service URL (leave empty when host Caddy proxies) |
+| `VITE_API_BASE_URL` | `http://localhost:8060` | CCE Gateway URL (leave empty when host Caddy proxies) |
 | `VITE_AUTH_ENABLED` | `false` | Enable OAuth |
 | `VITE_POLLING_INTERVAL` | `30000` | Auto-refresh interval (ms) |
 
