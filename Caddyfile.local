@@ -1,0 +1,16 @@
+:3000
+
+# Reverse-proxy API calls to the Compliance Service container (no gateway locally)
+handle /v1/compliance/* {
+	reverse_proxy cce-compliance-service:8080
+}
+
+# SPA static serving (everything else)
+handle {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+
+	@static path *.js *.css *.svg *.png *.ico *.woff2
+	header @static Cache-Control "public, max-age=31536000, immutable"
+}

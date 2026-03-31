@@ -1,6 +1,6 @@
 import type { ErrorResponse } from './types';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8060';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8060';
 
 export class ApiError extends Error {
   constructor(
@@ -12,7 +12,8 @@ export class ApiError extends Error {
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const url = new URL(`${BASE_URL}/v1${path}`);
+  const fullPath = `${BASE_URL}/v1/compliance${path}`;
+  const url = BASE_URL ? new URL(fullPath) : new URL(fullPath, window.location.origin);
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== '') url.searchParams.set(k, v);
