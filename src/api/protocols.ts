@@ -1,21 +1,29 @@
 import { apiGet } from './client';
 import type { ProtocolDefinitionDto } from './types';
 
-export function getProtocolDefinitions(): Promise<ProtocolDefinitionDto[]> {
-  return apiGet<ProtocolDefinitionDto[]>('/protocol-definitions');
+function normalizeProtocol(p: ProtocolDefinitionDto): ProtocolDefinitionDto {
+  return { ...p, status: p.status.toLowerCase() as ProtocolDefinitionDto['status'] };
 }
 
-export function getProtocolDefinition(id: string): Promise<ProtocolDefinitionDto> {
-  return apiGet<ProtocolDefinitionDto>(`/protocol-definitions/${encodeURIComponent(id)}`);
+export async function getProtocolDefinitions(): Promise<ProtocolDefinitionDto[]> {
+  const data = await apiGet<ProtocolDefinitionDto[]>('/protocol-definitions');
+  return data.map(normalizeProtocol);
 }
 
-export function getProtocolDefinitionsByUrl(url: string): Promise<ProtocolDefinitionDto[]> {
-  return apiGet<ProtocolDefinitionDto[]>('/protocol-definitions/by-url', { url });
+export async function getProtocolDefinition(id: string): Promise<ProtocolDefinitionDto> {
+  const data = await apiGet<ProtocolDefinitionDto>(`/protocol-definitions/${encodeURIComponent(id)}`);
+  return normalizeProtocol(data);
 }
 
-export function getProtocolDefinitionByUrlAndVersion(
+export async function getProtocolDefinitionsByUrl(url: string): Promise<ProtocolDefinitionDto[]> {
+  const data = await apiGet<ProtocolDefinitionDto[]>('/protocol-definitions/by-url', { url });
+  return data.map(normalizeProtocol);
+}
+
+export async function getProtocolDefinitionByUrlAndVersion(
   url: string,
   version: string,
 ): Promise<ProtocolDefinitionDto> {
-  return apiGet<ProtocolDefinitionDto>('/protocol-definitions/by-url-version', { url, version });
+  const data = await apiGet<ProtocolDefinitionDto>('/protocol-definitions/by-url-version', { url, version });
+  return normalizeProtocol(data);
 }

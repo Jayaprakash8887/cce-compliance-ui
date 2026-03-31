@@ -13,6 +13,15 @@ export default function DashboardPage() {
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
 
+  const activeProtocols = useMemo(() => protocols?.filter(p => p.status === 'active') ?? [], [protocols]);
+  const totalVersions = protocols?.length ?? 0;
+  const loadedToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return protocols?.filter(p => p.loadedAt.slice(0, 10) === today).length ?? 0;
+  }, [protocols]);
+
+  useEffect(() => { document.title = 'Dashboard — CCE Compliance'; }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = searchValue.trim();
@@ -33,15 +42,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const activeProtocols = useMemo(() => protocols?.filter(p => p.status === 'active') ?? [], [protocols]);
-  const totalVersions = protocols?.length ?? 0;
-  const loadedToday = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return protocols?.filter(p => p.loadedAt.slice(0, 10) === today).length ?? 0;
-  }, [protocols]);
-
-  useEffect(() => { document.title = 'Dashboard — CCE Compliance'; }, []);
 
   return (
     <div className="space-y-6">

@@ -45,6 +45,11 @@ export default function PatientOverviewPage() {
 
   useEffect(() => { document.title = `Patient ${patientId} — CCE Compliance`; }, [patientId]);
 
+  const filtered = useMemo(
+    () => filter === 'all' ? instances : instances?.filter(i => i.status === filter),
+    [instances, filter],
+  );
+
   if (isLoading) return <LoadingSpinner />;
   if (error) {
     if (error instanceof ApiError && error.status === 404) {
@@ -56,11 +61,6 @@ export default function PatientOverviewPage() {
       </div>
     );
   }
-
-  const filtered = useMemo(
-    () => filter === 'all' ? instances : instances?.filter(i => i.status === filter),
-    [instances, filter],
-  );
 
   return (
     <div className="space-y-6">
